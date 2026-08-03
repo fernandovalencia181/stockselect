@@ -39,23 +39,29 @@ class ProductForm
                                     ->relationship('category', 'name')
                                     ->label('Categoría')
                                     ->required(),
-                                TextInput::make('name')
-                                    ->label('Nombre')
-                                    ->required()
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn(Set $set, ?string $state) => $set('slug', Str::slug($state))),
-                                TextInput::make('slug')
-                                    ->label('Slug')
-                                    ->required()
-                                    ->unique(ignoreRecord: true),
                                 TextInput::make('brand')
                                     ->label('Marca')
                                     ->default('Adidas')
                                     ->required(),
+                                TextInput::make('name')
+                                    ->label('Nombre')
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function(Set $set, ?string $state, $get) {
+                                        $slug = Str::slug($state);
+                                        $set('slug', $slug);
+                                        if (empty($get('model_group'))) {
+                                            $set('model_group', $slug);
+                                        }
+                                    }),
+                                TextInput::make('slug')
+                                    ->label('Slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
                                 TextInput::make('model_group')
                                     ->label('Modelo/Grupo')
-                                    ->placeholder('Ej: adidas-forum-low')
-                                    ->helperText('Vincula colores.')
+                                    ->placeholder('Ej: mercedes-amg-f1-manga-larga')
+                                    ->helperText('Identificador para agrupar colores. Si no tiene más colores, déjalo igual que el slug.')
                                     ->required(),
                                 Select::make('gender')
                                     ->label('Género')
