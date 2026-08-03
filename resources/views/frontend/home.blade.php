@@ -143,11 +143,10 @@
                         if (!items.length) return;
                         const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
                         this.currentIndex = clampedIndex;
-                        // getBoundingClientRect da posición exacta en viewport sin afectar al scroll de la página
-                        const cardRect = items[clampedIndex].getBoundingClientRect();
-                        const sliderRect = slider.getBoundingClientRect();
-                        const targetScrollLeft = slider.scrollLeft + cardRect.left - sliderRect.left;
-                        slider.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+                        // Posición exacta por índice: no depende de animaciones en curso
+                        const cardWidth = items[0].getBoundingClientRect().width;
+                        const gap = parseFloat(window.getComputedStyle(slider).columnGap) || 12;
+                        slider.scrollTo({ left: clampedIndex * (cardWidth + gap), behavior: 'smooth' });
                     },
                     goNext() {
                         const total = this.$refs.slider ? this.$refs.slider.children.length : 0;
