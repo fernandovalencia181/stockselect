@@ -167,16 +167,16 @@
                 </button>
 
                 {{-- Contenedor del Slider --}}
-                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scroll-smooth scrollbar-hide snap-x snap-mandatory transition-all duration-700 gap-3 md:gap-6" style="scroll-padding: 0 16px;">
+                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scroll-smooth scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 md:gap-5 px-1" style="scroll-padding: 0 16px;">
                     @foreach($featuredProducts as $product)
                         {{-- Tarjeta Destacada --}}
-                        <div class="min-w-[52vw] sm:min-w-[44vw] md:min-w-[calc(33.33%-16px)] lg:min-w-[calc(25%-18px)] snap-center md:snap-start">
+                        <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start flex flex-col">
                             <a href="{{ route('product.show', $product->slug) }}"
-                                class="group/card block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_-10px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1.5 flex flex-col border border-gray-100 h-full relative">
+                                class="group/card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_-10px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1.5 flex flex-col border border-gray-100 h-full relative">
                                 
                                 {{-- Badge Premium --}}
-                                <div class="absolute top-3 left-3 md:top-4 md:left-4 z-10">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 md:px-3 md:py-1.5 rounded-md bg-white/80 text-gray-900 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] border border-gray-200/50 shadow-sm backdrop-blur-md">
+                                <div class="absolute top-3 left-3 z-10">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/90 text-gray-900 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] border border-gray-200/60 shadow-sm backdrop-blur-md">
                                         <svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                         </svg>
@@ -185,7 +185,7 @@
                                 </div>
 
                                 {{-- Imagen --}}
-                                <div class="relative w-full aspect-square bg-[#f4f4f4] overflow-hidden">
+                                <div class="relative w-full aspect-square bg-[#f4f4f4] overflow-hidden shrink-0">
                                     @php
                                         $firstImage = !empty($product->images) ? (is_array($product->images) ? $product->images[0] : $product->images) : null;
                                     @endphp
@@ -207,12 +207,12 @@
                                 {{-- Info --}}
                                 <div class="p-3.5 md:p-4 flex flex-col flex-1">
                                     <p class="text-[9px] md:text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em] mb-0.5">{{ $product->category->name ?? 'Exclusivo' }}</p>
-                                    <h3 class="text-[13px] md:text-[15px] font-bold text-gray-900 leading-snug mb-2 group-hover/card:text-amber-500 transition-colors duration-300 line-clamp-2">
+                                    <h3 class="text-[13px] md:text-[14px] font-bold text-gray-900 leading-snug line-clamp-2 h-[2.4rem] md:h-[2.6rem] mb-2 group-hover/card:text-amber-500 transition-colors duration-300">
                                         {{ $product->name }}
                                     </h3>
 
-                                    <div class="mt-auto flex items-baseline gap-2">
-                                        <span class="text-[15px] md:text-[17px] font-black text-gray-900 leading-none">{{ number_format($product->price, 2) }} €</span>
+                                    <div class="mt-auto flex items-baseline gap-2 pt-1 border-t border-gray-50">
+                                        <span class="text-[15px] md:text-[16px] font-black text-gray-900 leading-none">{{ number_format($product->price, 2) }} €</span>
                                         @if($product->original_price)
                                             <span class="text-[11px] md:text-[12px] text-gray-400 line-through font-medium">{{ number_format($product->original_price, 2) }} €</span>
                                         @endif

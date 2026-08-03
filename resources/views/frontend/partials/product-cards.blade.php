@@ -61,12 +61,12 @@
                 {{ $product->category->name ?? 'Outlet' }}
             </p>
 
-            <h3 class="text-[13px] lg:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2 mb-2 group-hover:text-amber-500 transition-colors duration-300">
+            <h3 class="text-[13px] lg:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2 h-[2.4rem] md:h-[2.6rem] mb-2 group-hover:text-amber-500 transition-colors duration-300">
                 {{ $product->name }}
             </h3>
 
             {{-- Precio --}}
-            <div class="mt-auto flex items-baseline gap-2">
+            <div class="mt-auto flex items-baseline gap-2 pt-1 border-t border-gray-50">
                 <p class="text-[14px] lg:text-[15px] font-black text-gray-900 leading-none">{{ number_format($product->price, 2) }} €</p>
                 @if($product->original_price)
                     <p class="text-[11px] lg:text-[12px] text-gray-400 line-through font-medium">{{ number_format($product->original_price, 2) }} €</p>
