@@ -118,17 +118,21 @@
         {{-- Slider con Alpine.js (compatible móvil/iOS) --}}
             <div x-data="{ 
                     currentIndex: 0,
-                    total: 0,
                     paused: false,
+                    visible: true,
                     pauseTimeout: null,
                     isMobile: false,
                     init() {
                         this.isMobile = window.matchMedia('(hover: none)').matches;
-                        this.$nextTick(() => {
-                            this.total = this.$refs.slider.children.length;
-                        });
+
+                        // Solo auto-avanzar cuando el carrusel sea visible en pantalla
+                        const observer = new IntersectionObserver((entries) => {
+                            this.visible = entries[0].isIntersecting;
+                        }, { threshold: 0.2 });
+                        observer.observe(this.$el);
+
                         setInterval(() => {
-                            if (this.paused) return;
+                            if (this.paused || !this.visible) return;
                             this.goNext();
                         }, 5000);
                     },
@@ -139,21 +143,21 @@
                         if (!items.length) return;
                         const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
                         this.currentIndex = clampedIndex;
-                        items[clampedIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+                        // getBoundingClientRect da posición exacta en viewport sin afectar al scroll de la página
+                        const cardRect = items[clampedIndex].getBoundingClientRect();
+                        const sliderRect = slider.getBoundingClientRect();
+                        const targetScrollLeft = slider.scrollLeft + cardRect.left - sliderRect.left;
+                        slider.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
                     },
                     goNext() {
-                        const slider = this.$refs.slider;
-                        if (!slider) return;
-                        const total = slider.children.length;
-                        if (this.currentIndex >= total - 1) {
-                            this.currentIndex = 0;
-                            slider.children[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-                        } else {
-                            this.goTo(this.currentIndex + 1);
-                        }
+                        const total = this.$refs.slider ? this.$refs.slider.children.length : 0;
+                        const nextIndex = this.currentIndex >= total - 1 ? 0 : this.currentIndex + 1;
+                        this.goTo(nextIndex);
                     },
                     goPrev() {
-                        this.goTo(this.currentIndex - 1);
+                        const total = this.$refs.slider ? this.$refs.slider.children.length : 0;
+                        const prevIndex = this.currentIndex <= 0 ? total - 1 : this.currentIndex - 1;
+                        this.goTo(prevIndex);
                     },
                     pauseTemp() {
                         this.paused = true;
@@ -181,7 +185,7 @@
                 </button>
 
                 {{-- Contenedor del Slider --}}
-                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
+                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; scroll-behavior: auto;">
                     @foreach($featuredProducts as $product)
                         {{-- Tarjeta Destacada --}}
                         <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start flex flex-col">
