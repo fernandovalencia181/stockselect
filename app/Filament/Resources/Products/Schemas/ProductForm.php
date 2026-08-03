@@ -42,13 +42,29 @@ class ProductForm
                                 TextInput::make('brand')
                                     ->label('Marca')
                                     ->default('Adidas')
-                                    ->required(),
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function(Set $set, ?string $state, $get) {
+                                        $name = trim((string) $get('name'));
+                                        if (!empty($name)) {
+                                            $brand = trim((string) $state);
+                                            $full = (stripos($name, $brand) === 0 || empty($brand)) ? $name : "{$brand} {$name}";
+                                            $slug = Str::slug($full);
+                                            $set('slug', $slug);
+                                            if (empty($get('model_group'))) {
+                                                $set('model_group', $slug);
+                                            }
+                                        }
+                                    }),
                                 TextInput::make('name')
                                     ->label('Nombre')
                                     ->required()
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function(Set $set, ?string $state, $get) {
-                                        $slug = Str::slug($state);
+                                        $brand = trim((string) $get('brand'));
+                                        $name = trim((string) $state);
+                                        $full = (stripos($name, $brand) === 0 || empty($brand)) ? $name : "{$brand} {$name}";
+                                        $slug = Str::slug($full);
                                         $set('slug', $slug);
                                         if (empty($get('model_group'))) {
                                             $set('model_group', $slug);
