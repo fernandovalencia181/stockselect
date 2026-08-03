@@ -139,10 +139,7 @@
                         if (!items.length) return;
                         const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
                         this.currentIndex = clampedIndex;
-                        const card = items[clampedIndex];
-                        const gap = parseInt(window.getComputedStyle(slider).columnGap) || 16;
-                        const scrollTo = card.offsetLeft - slider.offsetLeft;
-                        slider.scrollTo({ left: scrollTo, behavior: 'smooth' });
+                        items[clampedIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
                     },
                     goNext() {
                         const slider = this.$refs.slider;
@@ -150,7 +147,7 @@
                         const total = slider.children.length;
                         if (this.currentIndex >= total - 1) {
                             this.currentIndex = 0;
-                            slider.scrollTo({ left: 0, behavior: 'smooth' });
+                            slider.children[0].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
                         } else {
                             this.goTo(this.currentIndex + 1);
                         }
