@@ -115,59 +115,76 @@
                 </h2>
             </div>
 
-            {{-- Slider con Alpine.js --}}
+        {{-- Slider con Alpine.js (compatible móvil/iOS) --}}
             <div x-data="{ 
+                    currentIndex: 0,
+                    total: 0,
                     paused: false,
                     pauseTimeout: null,
-                    next() { 
-                        const slider = $refs.slider;
-                        if (!slider) return;
-                        const cardWidth = slider.firstElementChild.offsetWidth + 16;
-                        slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
-                    }, 
-                    prev() { 
-                        const slider = $refs.slider;
-                        if (!slider) return;
-                        const cardWidth = slider.firstElementChild.offsetWidth + 16;
-                        slider.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+                    isMobile: false,
+                    init() {
+                        this.isMobile = window.matchMedia('(hover: none)').matches;
+                        this.$nextTick(() => {
+                            this.total = this.$refs.slider.children.length;
+                        });
+                        setInterval(() => {
+                            if (this.paused) return;
+                            this.goNext();
+                        }, 5000);
                     },
-                    handleInteraction() {
+                    goTo(index) {
+                        const slider = this.$refs.slider;
+                        if (!slider) return;
+                        const items = slider.children;
+                        if (!items.length) return;
+                        const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+                        this.currentIndex = clampedIndex;
+                        const card = items[clampedIndex];
+                        const gap = parseInt(window.getComputedStyle(slider).columnGap) || 16;
+                        const scrollTo = card.offsetLeft - slider.offsetLeft;
+                        slider.scrollTo({ left: scrollTo, behavior: 'smooth' });
+                    },
+                    goNext() {
+                        const slider = this.$refs.slider;
+                        if (!slider) return;
+                        const total = slider.children.length;
+                        if (this.currentIndex >= total - 1) {
+                            this.currentIndex = 0;
+                            slider.scrollTo({ left: 0, behavior: 'smooth' });
+                        } else {
+                            this.goTo(this.currentIndex + 1);
+                        }
+                    },
+                    goPrev() {
+                        this.goTo(this.currentIndex - 1);
+                    },
+                    pauseTemp() {
                         this.paused = true;
                         clearTimeout(this.pauseTimeout);
                         this.pauseTimeout = setTimeout(() => {
                             this.paused = false;
-                        }, 8000); // Esperar 8 segundos tras la última interacción
+                        }, 8000);
                     }
-                }" 
-                x-init="setInterval(() => { 
-                    if (paused) return;
-                    const slider = $refs.slider;
-                    if (!slider) return;
-                    if (slider.scrollLeft + slider.offsetWidth >= slider.scrollWidth - 50) { 
-                        slider.scrollTo({ left: 0, behavior: 'smooth' }); 
-                    } else { 
-                        next(); 
-                    } 
-                }, 5000)" 
-                @mouseenter="paused = true"
-                @mouseleave="paused = false"
-                @touchstart="handleInteraction()"
-                @scroll.debounce.250ms="handleInteraction()"
+                }"
+                x-init="init()"
+                @mouseenter="!isMobile && (paused = true)"
+                @mouseleave="!isMobile && (paused = false)"
+                @touchstart.passive="pauseTemp()"
                 class="relative group">
                 
                 {{-- Botones Navegación (Solo Desktop) --}}
-                <button @click="prev()" 
+                <button @click="goPrev()" 
                     class="hidden md:flex absolute left-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center bg-white/95 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 text-gray-900">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                 </button>
                 
-                <button @click="next()" 
+                <button @click="goNext()" 
                     class="hidden md:flex absolute right-[-20px] top-1/2 -translate-y-1/2 z-20 w-12 h-12 items-center justify-center bg-white/95 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 text-gray-900">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
                 </button>
 
                 {{-- Contenedor del Slider --}}
-                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scroll-smooth scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 md:gap-5 px-1" style="scroll-padding: 0 16px;">
+                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide snap-x snap-mandatory gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;">
                     @foreach($featuredProducts as $product)
                         {{-- Tarjeta Destacada --}}
                         <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start flex flex-col">
@@ -222,6 +239,18 @@
                         </div>
                     @endforeach
                 </div>
+
+                {{-- Dots indicadores (Solo móvil) --}}
+                @if($featuredProducts->count() > 1)
+                <div class="flex md:hidden justify-center gap-1.5 mt-3">
+                    @foreach($featuredProducts as $i => $p)
+                        <button @click="goTo({{ $i }}); pauseTemp()"
+                            class="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                            :class="currentIndex === {{ $i }} ? 'bg-gray-900 w-4' : 'bg-gray-300'">
+                        </button>
+                    @endforeach
+                </div>
+                @endif
             </div>
         </section>
     @endif
