@@ -61,7 +61,7 @@
                 {{ $product->category->name ?? 'Outlet' }}
             </p>
 
-            <h3 class="text-[13px] lg:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2 h-[2.4rem] md:h-[2.6rem] mb-2 group-hover:text-amber-500 transition-colors duration-300">
+            <h3 class="text-[13px] lg:text-[13px] font-bold text-gray-900 leading-snug line-clamp-2 mb-2 group-hover:text-amber-500 transition-colors duration-300">
                 {{ $product->name }}
             </h3>
 

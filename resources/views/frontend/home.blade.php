@@ -224,7 +224,7 @@
                                 {{-- Info --}}
                                 <div class="p-3.5 md:p-4 flex flex-col flex-1">
                                     <p class="text-[9px] md:text-[10px] font-semibold text-gray-400 uppercase tracking-[0.12em] mb-0.5">{{ $product->category->name ?? 'Exclusivo' }}</p>
-                                    <h3 class="text-[13px] md:text-[14px] font-bold text-gray-900 leading-snug line-clamp-2 h-[2.4rem] md:h-[2.6rem] mb-2 group-hover/card:text-amber-500 transition-colors duration-300">
+                                    <h3 class="text-[13px] md:text-[14px] font-bold text-gray-900 leading-snug line-clamp-2 mb-2 group-hover/card:text-amber-500 transition-colors duration-300">
                                         {{ $product->name }}
                                     </h3>
 
