@@ -159,6 +159,13 @@
                             this.currentIndex = closestIndex;
                         }, 50);
                     },
+                    snapTimeout: null,
+                    onTouchStart() {
+                        const slider = this.$refs.slider;
+                        if (slider) slider.style.scrollSnapType = 'x mandatory';
+                        this.isProgrammatic = false;
+                        this.pauseTemp();
+                    },
                     goTo(index) {
                         const slider = this.$refs.slider;
                         if (!slider) return;
@@ -169,11 +176,14 @@
                         const targetItem = items[clampedIndex];
                         if (targetItem) {
                             this.isProgrammatic = true;
+                            slider.style.scrollSnapType = 'none';
                             slider.scrollTo({
                                 left: targetItem.offsetLeft - slider.offsetLeft,
                                 behavior: 'smooth'
                             });
-                            setTimeout(() => {
+                            clearTimeout(this.snapTimeout);
+                            this.snapTimeout = setTimeout(() => {
+                                slider.style.scrollSnapType = 'x mandatory';
                                 this.isProgrammatic = false;
                             }, 500);
                         }
@@ -201,7 +211,7 @@
                 x-init="init()"
                 @mouseenter="!isMobile && (paused = true)"
                 @mouseleave="!isMobile && (paused = false)"
-                @touchstart.passive="pauseTemp()"
+                @touchstart.passive="onTouchStart()"
                 class="relative group">
                 
                 {{-- Botones Navegación (Solo Desktop) --}}
