@@ -60,18 +60,109 @@
                 currentImage: 0,
                 isLightboxOpen: false,
                 isZoomed: false,
-                zoomX: 50,
-                zoomY: 50,
                 images: {{ Js::from(is_array($product->images) ? $product->images : (empty($product->images) ? [] : [$product->images])) }},
-                next() { 
-                    this.isZoomed = false;
-                    this.currentImage = (this.currentImage === this.images.length - 1) ? 0 : this.currentImage + 1; 
-                }, 
-                prev() { 
-                    this.isZoomed = false;
-                    this.currentImage = (this.currentImage === 0) ? this.images.length - 1 : this.currentImage - 1; 
+                next() {
+                    this.currentImage = (this.currentImage === this.images.length - 1) ? 0 : this.currentImage + 1;
+                },
+                prev() {
+                    this.currentImage = (this.currentImage === 0) ? this.images.length - 1 : this.currentImage - 1;
+                },
+                initGestures(el) {
+                    const self = this;
+
+                    // Local JS vars — NOT Alpine reactive — for max performance on iOS
+                    let scale = 1, panX = 0, panY = 0;
+                    let pinchDist = 0;
+                    let swipeStartX = 0, lastTX = 0, lastTY = 0;
+                    let isPanning = false, touchMoved = false;
+
+                    function getImg() { return el.querySelector('img'); }
+
+                    function applyTransform(smooth) {
+                        const img = getImg();
+                        if (!img) return;
+                        img.style.transition = smooth ? 'transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+                        img.style.transform = scale <= 1
+                            ? 'translate(0px,0px) scale(1)'
+                            : `translate(${panX}px,${panY}px) scale(${scale})`;
+                    }
+
+                    function resetAll(smooth) {
+                        scale = 1; panX = 0; panY = 0;
+                        applyTransform(smooth);
+                        self.isZoomed = false;
+                    }
+
+                    el.addEventListener('touchstart', (e) => {
+                        touchMoved = false;
+                        if (e.touches.length === 2) {
+                            pinchDist = Math.hypot(
+                                e.touches[0].clientX - e.touches[1].clientX,
+                                e.touches[0].clientY - e.touches[1].clientY
+                            );
+                            isPanning = false;
+                        } else if (e.touches.length === 1) {
+                            swipeStartX = e.touches[0].clientX;
+                            lastTX = e.touches[0].clientX;
+                            lastTY = e.touches[0].clientY;
+                            isPanning = scale > 1;
+                        }
+                    }, { passive: true });
+
+                    el.addEventListener('touchmove', (e) => {
+                        e.preventDefault();
+                        touchMoved = true;
+                        if (e.touches.length === 2) {
+                            const dist = Math.hypot(
+                                e.touches[0].clientX - e.touches[1].clientX,
+                                e.touches[0].clientY - e.touches[1].clientY
+                            );
+                            scale = Math.min(Math.max(scale * (dist / pinchDist), 0.8), 5);
+                            pinchDist = dist;
+                            applyTransform(false);
+                        } else if (e.touches.length === 1 && isPanning) {
+                            panX += e.touches[0].clientX - lastTX;
+                            panY += e.touches[0].clientY - lastTY;
+                            lastTX = e.touches[0].clientX;
+                            lastTY = e.touches[0].clientY;
+                            applyTransform(false);
+                        }
+                    }, { passive: false }); // passive:false is REQUIRED to call preventDefault on iOS
+
+                    el.addEventListener('touchend', (e) => {
+                        isPanning = false;
+
+                        if (scale < 1.15) {
+                            // Snap back to normal
+                            resetAll(true);
+                            // Swipe to next/prev only when not zoomed
+                            if (touchMoved && e.touches.length === 0) {
+                                const dx = e.changedTouches[0].clientX - swipeStartX;
+                                if (dx > 60) self.prev();
+                                else if (dx < -60) self.next();
+                            }
+                        } else {
+                            self.isZoomed = true;
+                        }
+
+                        // Single tap = toggle zoom
+                        if (!touchMoved && e.touches.length === 0 && e.changedTouches.length === 1) {
+                            if (scale <= 1) {
+                                scale = 2.5;
+                                applyTransform(true);
+                                self.isZoomed = true;
+                            } else {
+                                resetAll(true);
+                            }
+                        }
+                    }, { passive: true });
+
+                    // When the lightbox closes, reset everything
+                    self.$watch('isLightboxOpen', (val) => { if (!val) resetAll(false); });
+                    // When image changes, reset zoom
+                    self.$watch('currentImage', () => resetAll(false));
                 }
-            }" x-init="$watch('isLightboxOpen', value => { if(!value) isZoomed = false })">
+            }" x-init="$nextTick(() => { /* gestures attached per-element */ })">
                 
                 @if(!empty($product->images) && is_array($product->images))
                     {{-- Imagen Principal Swipeable --}}
@@ -152,44 +243,30 @@
                          class="fixed inset-0 z-[100] bg-neutral-950/98 backdrop-blur-2xl flex flex-col items-center justify-center touch-none">
                         
                         {{-- Header con contador y cierre --}}
-                        <div class="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
-                            <div class="flex items-center justify-center bg-black/40 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 shadow-xl">
+                        <div class="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10 pointer-events-none">
+                            <div class="flex items-center justify-center bg-black/40 backdrop-blur-xl px-5 py-2.5 rounded-full border border-white/10 shadow-xl pointer-events-auto">
                                 <span class="text-white text-sm font-black tracking-[0.2em] uppercase" x-text="(currentImage + 1) + ' / ' + images.length"></span>
                             </div>
                             <button @click="isLightboxOpen = false" 
-                                    class="group bg-black/40 hover:bg-black/60 text-white rounded-full p-3 backdrop-blur-xl transition-all duration-300 active:scale-90 border border-white/10 shadow-xl">
+                                    class="pointer-events-auto group bg-black/40 hover:bg-black/60 text-white rounded-full p-3 backdrop-blur-xl transition-all duration-300 active:scale-90 border border-white/10 shadow-xl">
                                 <svg class="w-7 h-7 transform group-hover:rotate-90 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        {{-- Área de Imagen Central con Zoom --}}
-                        <div class="w-full h-full flex items-center justify-center p-4 md:p-12 lg:p-20 overflow-hidden select-none relative" 
-                             @click.self="isLightboxOpen = false"
-                             x-data="{ touchStartX: 0, touchEndX: 0 }"
-                             @touchstart="touchStartX = $event.changedTouches[0].screenX"
-                             @touchend="touchEndX = $event.changedTouches[0].screenX; if(!isZoomed) { if(touchStartX - touchEndX > 50) { next(); } else if(touchEndX - touchStartX > 50) { prev(); } }">
-                            
-                            <div class="relative cursor-zoom-in overflow-hidden flex items-center justify-center transition-all duration-500"
-                                 :class="isZoomed ? 'w-full h-full cursor-zoom-out' : 'max-w-[95%] max-h-[75vh] md:max-h-[85vh]'"
-                                 @click="isZoomed = !isZoomed"
-                                 @mousemove="if(isZoomed) { 
-                                     let rect = $el.getBoundingClientRect(); 
-                                     zoomX = (($event.clientX - rect.left) / rect.width) * 100; 
-                                     zoomY = (($event.clientY - rect.top) / rect.height) * 100;
-                                 }">
-                                <img :key="currentImage" 
-                                     x-transition:enter="transition ease-out duration-400"
-                                     x-transition:enter-start="opacity-0 scale-90"
-                                     x-transition:enter-end="opacity-100 scale-100"
-                                     :src="'{{ asset('storage') }}/' + images[currentImage]" 
-                                     class="w-full h-full object-contain pointer-events-none transition-transform duration-500" 
-                                     :style="isZoomed 
-                                        ? `transform: scale(2.5); transform-origin: ${zoomX}% ${zoomY}%;` 
-                                        : 'transform: scale(1); transform-origin: center;'"
-                                     alt="Product detailed view">
-                            </div>
+                        {{-- Área de Imagen — gestos manejados por initGestures() con DOM directo --}}
+                        <div class="w-full h-full flex items-center justify-center overflow-hidden"
+                             style="touch-action: none; user-select: none;"
+                             x-init="initGestures($el)"
+                             :class="isZoomed ? 'cursor-grab' : 'cursor-zoom-in'">
+                            <img :src="'{{ asset('storage') }}/' + images[currentImage]"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 class="max-w-[92vw] max-h-[80vh] object-contain pointer-events-none"
+                                 style="transform-origin: center center; will-change: transform;"
+                                 alt="Product image">
                         </div>
 
                         {{-- Controles de Navegación --}}
