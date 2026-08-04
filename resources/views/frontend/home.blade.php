@@ -121,6 +121,7 @@
                     paused: false,
                     visible: true,
                     pauseTimeout: null,
+                    scrollTimer: null,
                     isMobile: false,
                     init() {
                         this.isMobile = window.matchMedia('(hover: none)').matches;
@@ -136,6 +137,26 @@
                             this.goNext();
                         }, 5000);
                     },
+                    onScroll() {
+                        clearTimeout(this.scrollTimer);
+                        this.scrollTimer = setTimeout(() => {
+                            const slider = this.$refs.slider;
+                            if (!slider || !slider.children.length) return;
+                            const items = slider.children;
+                            const scrollLeft = slider.scrollLeft;
+                            let closestIndex = 0;
+                            let minDiff = Infinity;
+                            for (let i = 0; i < items.length; i++) {
+                                const itemLeft = items[i].offsetLeft - slider.offsetLeft;
+                                const diff = Math.abs(scrollLeft - itemLeft);
+                                if (diff < minDiff) {
+                                    minDiff = diff;
+                                    closestIndex = i;
+                                }
+                            }
+                            this.currentIndex = closestIndex;
+                        }, 60);
+                    },
                     goTo(index) {
                         const slider = this.$refs.slider;
                         if (!slider) return;
@@ -143,18 +164,23 @@
                         if (!items.length) return;
                         const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
                         this.currentIndex = clampedIndex;
-                        // Posición exacta por índice: no depende de animaciones en curso
-                        const cardWidth = items[0].getBoundingClientRect().width;
-                        const gap = parseFloat(window.getComputedStyle(slider).columnGap) || 12;
-                        slider.scrollTo({ left: clampedIndex * (cardWidth + gap), behavior: 'smooth' });
+                        const targetItem = items[clampedIndex];
+                        if (targetItem) {
+                            slider.scrollTo({
+                                left: targetItem.offsetLeft - slider.offsetLeft,
+                                behavior: 'smooth'
+                            });
+                        }
                     },
                     goNext() {
                         const total = this.$refs.slider ? this.$refs.slider.children.length : 0;
+                        if (total <= 1) return;
                         const nextIndex = this.currentIndex >= total - 1 ? 0 : this.currentIndex + 1;
                         this.goTo(nextIndex);
                     },
                     goPrev() {
                         const total = this.$refs.slider ? this.$refs.slider.children.length : 0;
+                        if (total <= 1) return;
                         const prevIndex = this.currentIndex <= 0 ? total - 1 : this.currentIndex - 1;
                         this.goTo(prevIndex);
                     },
@@ -184,7 +210,7 @@
                 </button>
 
                 {{-- Contenedor del Slider --}}
-                <div x-ref="slider" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; scroll-behavior: auto;">
+                <div x-ref="slider" @scroll.passive="onScroll()" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; scroll-behavior: auto;">
                     @foreach($featuredProducts as $product)
                         {{-- Tarjeta Destacada --}}
                         <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start flex flex-col">
