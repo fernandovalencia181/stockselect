@@ -122,6 +122,7 @@
                     visible: true,
                     pauseTimeout: null,
                     scrollTimer: null,
+                    isProgrammatic: false,
                     isMobile: false,
                     init() {
                         this.isMobile = window.matchMedia('(hover: none)').matches;
@@ -138,6 +139,7 @@
                         }, 5000);
                     },
                     onScroll() {
+                        if (this.isProgrammatic) return;
                         clearTimeout(this.scrollTimer);
                         this.scrollTimer = setTimeout(() => {
                             const slider = this.$refs.slider;
@@ -155,7 +157,7 @@
                                 }
                             }
                             this.currentIndex = closestIndex;
-                        }, 60);
+                        }, 50);
                     },
                     goTo(index) {
                         const slider = this.$refs.slider;
@@ -166,10 +168,14 @@
                         this.currentIndex = clampedIndex;
                         const targetItem = items[clampedIndex];
                         if (targetItem) {
+                            this.isProgrammatic = true;
                             slider.scrollTo({
                                 left: targetItem.offsetLeft - slider.offsetLeft,
                                 behavior: 'smooth'
                             });
+                            setTimeout(() => {
+                                this.isProgrammatic = false;
+                            }, 500);
                         }
                     },
                     goNext() {
@@ -213,7 +219,7 @@
                 <div x-ref="slider" @scroll.passive="onScroll()" class="flex overflow-x-auto pb-4 md:pb-8 scrollbar-hide gap-3 sm:gap-4 md:gap-5 px-1" style="-webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; scroll-behavior: auto;">
                     @foreach($featuredProducts as $product)
                         {{-- Tarjeta Destacada --}}
-                        <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start flex flex-col">
+                        <div class="w-[240px] sm:w-[260px] md:w-[270px] lg:w-[280px] shrink-0 snap-start snap-always flex flex-col" style="scroll-snap-stop: always;">
                             <a href="{{ route('product.show', $product->slug) }}"
                                 class="group/card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-[0_12px_36px_-10px_rgba(0,0,0,0.12)] transition-all duration-300 hover:-translate-y-1.5 flex flex-col border border-gray-100 h-full relative">
                                 
