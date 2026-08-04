@@ -38,6 +38,15 @@
                         Inicio
                     </a>
                 </li>
+                @if($product->gender)
+                    <li class="flex-shrink-0"><svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></li>
+                    <li class="flex-shrink-0">
+                        <a href="{{ route('home') }}?genero={{ $product->gender }}"
+                           class="inline-flex items-center text-[11px] md:text-[12px] font-semibold text-gray-400 hover:text-gray-700 transition-colors">
+                            {{ $product->getGenderLabel() }}
+                        </a>
+                    </li>
+                @endif
                 <li class="flex-shrink-0"><svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></li>
                 <li class="flex-shrink-0">
                     <a href="{{ route('home') }}?genero={{ $product->gender ?? 'Todo' }}&category={{ urlencode($product->category->name ?? '') }}"
@@ -335,10 +344,25 @@
             {{-- Información del producto (Derecha - Sticky on Desktop) --}}
             <div class="flex flex-col pt-0 lg:pt-8 lg:sticky lg:top-28 h-fit">
                 <div class="mb-8 block">
-                    <div class="flex items-center gap-2 mb-3">
+                    <div class="flex items-center flex-wrap gap-2 mb-3">
                         <p class="text-[12px] font-bold uppercase tracking-[0.2em] text-gray-400 animate-boutique-in opacity-0">{{ $product->category->name ?? 'Outlet' }}</p>
+                        @if($product->gender)
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-gray-100 text-gray-800 border border-gray-200/80 animate-boutique-in opacity-0">
+                                @if($product->gender === 'mujer')
+                                    Colección Mujer
+                                @elseif($product->gender === 'hombre')
+                                    Colección Hombre
+                                @elseif($product->gender === 'ninos')
+                                    Niños / Infantil
+                                @elseif($product->gender === 'unisex')
+                                    Unisex
+                                @else
+                                    {{ $product->getGenderLabel() }}
+                                @endif
+                            </span>
+                        @endif
                         @if($product->has_replacement_box)
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-50 text-amber-900 border border-amber-200/80">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-amber-50 text-amber-900 border border-amber-200/80 animate-boutique-in opacity-0">
                                 <span>📦</span> Caja Genérica
                             </span>
                         @endif

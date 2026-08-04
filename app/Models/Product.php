@@ -46,6 +46,12 @@ class Product extends Model
         ];
     }
 
+    public function getGenderLabel(): ?string
+    {
+        $options = self::getGenderOptions();
+        return $options[$this->gender] ?? ($this->gender ? ucfirst($this->gender) : null);
+    }
+
     public static function getFitOptions(): array
     {
         return [
