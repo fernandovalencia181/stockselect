@@ -51,10 +51,10 @@ class SiteSettingResource extends Resource
                                 $key = $record?->key;
 
                                 // 1. Toggles (Booleano)
-                                if (in_array($key, ['promo_bar_active', 'maintenance_mode'])) {
+                                if (in_array($key, ['promo_bar_active', 'maintenance_mode', 'footer_show_payment_methods'])) {
                                     return [
                                         Toggle::make('value')
-                                            ->label('Activo / Desactivado')
+                                            ->label('Mostrar / Activar')
                                             ->afterStateHydrated(fn (Toggle $component, $state) => $component->state((bool) $state))
                                             ->dehydrateStateUsing(fn ($state) => $state ? '1' : '0'),
                                     ];

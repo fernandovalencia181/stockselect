@@ -463,7 +463,11 @@ class CheckoutController extends Controller
             }
         }
 
-        $waNumber  = \App\Models\SiteSetting::getValue('whatsapp_number', '34600000000');
+        $rawWaNumber = \App\Models\SiteSetting::getValue('whatsapp_number', '34643717157');
+        $waNumber    = preg_replace('/[^0-9]/', '', (string) $rawWaNumber);
+        if (empty($waNumber)) {
+            $waNumber = '34643717157';
+        }
         $shopName  = \App\Models\SiteSetting::getValue('legal_shop_name', 'Stock Select');
 
         $msg  = "¡Hola! Quiero confirmar mi pedido #{$order->id} en {$shopName}.\n\n";

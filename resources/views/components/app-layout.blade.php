@@ -518,6 +518,7 @@
 
                 {{-- Bottom mobile --}}
                 <div class="mt-6 pt-5 border-t border-white/5">
+                    @if(!empty($settings['footer_show_payment_methods']) && $settings['footer_show_payment_methods'] === '1')
                     <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2.5 bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3 mb-5">
                         <img src="{{ asset('images/payments/visa.svg') }}?v=3" alt="Visa" class="h-4 w-auto opacity-50">
                         <img src="{{ asset('images/payments/mastercard.svg') }}?v=3" alt="Mastercard" class="h-4 w-auto opacity-50">
@@ -530,6 +531,7 @@
                         <img src="{{ asset('images/payments/scalipay.svg') }}" alt="Scalipay" class="h-4 w-auto opacity-50">
                         <img src="{{ asset('images/payments/revolut_gris.svg') }}" alt="Revolut" class="h-4 w-auto opacity-50">
                     </div>
+                    @endif
                     <p class="text-center text-[11px] text-gray-700 leading-relaxed">
                         © {{ date('Y') }} <span class="text-gray-500 font-semibold">{{ $settings['site_title'] ?? 'STOCK SELECT' }}</span><br>
                         Todos los derechos reservados
@@ -627,6 +629,7 @@
                         <p class="text-[12px] text-gray-600">© {{ date('Y') }} <span class="text-gray-400 font-semibold">{{ $settings['site_title'] ?? ($settings['legal_shop_name'] ?? 'STOCK SELECT') }}</span> · Todos los derechos reservados</p>
                         <p class="text-[10px] uppercase tracking-[0.2em] text-gray-800 mt-1">Premium Curated Selection · Boutique Outlet</p>
                     </div>
+                    @if(!empty($settings['footer_show_payment_methods']) && $settings['footer_show_payment_methods'] === '1')
                     <div class="flex flex-wrap items-center gap-x-4 gap-y-2.5 bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-3">
                         <img src="{{ asset('images/payments/visa.svg') }}?v=3" alt="Visa" class="h-4 w-auto opacity-50 hover:opacity-100 transition-opacity">
                         <img src="{{ asset('images/payments/mastercard.svg') }}?v=3" alt="Mastercard" class="h-4 w-auto opacity-50 hover:opacity-100 transition-opacity">
@@ -639,6 +642,7 @@
                         <img src="{{ asset('images/payments/scalipay.svg') }}" alt="Scalipay" class="h-4 w-auto opacity-50 hover:opacity-100 transition-opacity">
                         <img src="{{ asset('images/payments/revolut_gris.svg') }}" alt="Revolut" class="h-4 w-auto opacity-50 hover:opacity-100 transition-opacity">
                     </div>
+                    @endif
                 </div>
             </div>
 

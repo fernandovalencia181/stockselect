@@ -62,6 +62,7 @@ class ProductionDataSeeder extends Seeder
             ['key' => 'home_featured_title', 'value' => 'Nuestra Selección', 'label' => 'Título Sección Destacada', 'group' => 'general'],
             ['key' => 'home_featured_subtitle', 'value' => 'Esenciales', 'label' => 'Subtítulo Sección Destacada', 'group' => 'general'],
             ['key' => 'product_badge_text', 'value' => 'DESTACADO', 'label' => 'Etiqueta de Producto Destacado', 'group' => 'general'],
+            ['key' => 'footer_show_payment_methods', 'value' => '0', 'label' => 'Mostrar Iconos de Métodos de Pago en Footer', 'group' => 'general'],
         ];
 
         foreach ($settings as $setting) {
