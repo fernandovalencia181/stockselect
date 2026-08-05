@@ -157,60 +157,33 @@ class CheckoutController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'required|string|max:50',
-            'shipping_method' => 'required|string|in:standard_delivery,local_pickup',
-            'payment_method' => 'required|string|in:whatsapp,stripe',
-            'shipping_street' => 'required_if:shipping_method,standard_delivery|nullable|string|max:255',
-            'shipping_number' => 'required_if:shipping_method,standard_delivery|nullable|string|max:20',
-            'shipping_floor' => 'nullable|string|max:255',
-            'shipping_notes' => 'nullable|string|max:500',
-            'shipping_city' => 'required_if:shipping_method,standard_delivery|nullable|string|max:255',
-            'shipping_zip' => 'required_if:shipping_method,standard_delivery|nullable|string|max:20',
-            'shipping_province' => 'required_if:shipping_method,standard_delivery|nullable|string|max:255',
-            'accept_terms' => 'accepted',
+            'customer_name'   => 'required|string|max:255',
+            'customer_phone'  => 'required|string|max:50',
+            'customer_email'  => 'nullable|email|max:255',
+            'shipping_method' => 'nullable|string',
+            'payment_method'  => 'nullable|string',
         ], [
-            'shipping_street.required_if' => 'La calle es obligatoria.',
-            'shipping_number.required_if' => 'El número es obligatorio.',
-            'shipping_city.required_if' => 'La ciudad es obligatoria.',
-            'shipping_zip.required_if' => 'El código postal es obligatorio.',
-            'accept_terms.accepted' => 'Debes aceptar los términos y condiciones.',
+            'customer_name.required'  => 'Por favor, introduce tu nombre.',
+            'customer_phone.required' => 'Por favor, introduce tu teléfono de contacto.',
+            'customer_email.email'    => 'El correo electrónico no es válido.',
         ]);
 
-        // Concatenar dirección para la DB de forma limpia y ultra-detallada
-        $fullAddress = null;
-        if ($request->shipping_method === 'standard_delivery') {
-            $parts = [];
+        $shippingMethod = $request->input('shipping_method', 'local_pickup');
+        $paymentMethod  = $request->input('payment_method', 'whatsapp');
+        
+        $customerEmail = $request->filled('customer_email')
+            ? trim($request->customer_email)
+            : (preg_replace('/[^0-9]/', '', $request->customer_phone) . '@whatsapp.stockselect.es');
 
-            // 1. Calle y Número
-            $parts[] = trim($request->shipping_street . ' ' . $request->shipping_number);
-
-            // 2. Vivienda/Piso (Si existe)
-            if ($request->filled('shipping_floor')) {
-                $parts[] = 'Piso/Puerta: ' . trim($request->shipping_floor);
-            }
-
-            // 3. Notas del repartidor (Si existen, entre corchetes para destacar)
-            if ($request->filled('shipping_notes')) {
-                $parts[] = '[' . trim($request->shipping_notes) . ']';
-            }
-
-            // 4. Ciudad y CP
-            $location = trim($request->shipping_city . ' ' . $request->shipping_zip);
-            if ($request->filled('shipping_province')) {
-                $location .= " ({$request->shipping_province})";
-            }
-            $parts[] = $location;
-
-            $fullAddress = implode(', ', array_filter($parts));
-        } else {
-            $notes = $request->filled('shipping_notes') ? ' [Notas: ' . trim($request->shipping_notes) . ']' : '';
-            $fullAddress = "Entrega en Mano (Mollerussa)" . $notes;
-        }
+        $fullAddress = "Entrega en Mano (Mollerussa)";
 
         // Sobrescribimos el request para que fluya correctamente a los modelos
-        $request->merge(['shipping_address' => $fullAddress]);
+        $request->merge([
+            'shipping_address' => $fullAddress,
+            'shipping_method'  => $shippingMethod,
+            'payment_method'   => $paymentMethod,
+            'customer_email'   => $customerEmail,
+        ]);
 
         $cart = session()->get('cart', []);
 
@@ -481,11 +454,13 @@ class CheckoutController extends Controller
 
         session()->forget('cart');
 
-        // Email de confirmación de pedido (flujo WhatsApp — encolado, no bloquea el redirect)
-        try {
-            Mail::to($order->customer_email)->queue(new OrderConfirmed($order));
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Error enviando confirmación de pedido WhatsApp #{$order->id}: " . $e->getMessage());
+        // Email de confirmación de pedido si el cliente indicó un email real
+        if (!str_ends_with($order->customer_email, '@whatsapp.stockselect.es')) {
+            try {
+                Mail::to($order->customer_email)->queue(new OrderConfirmed($order));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Error enviando confirmación de pedido WhatsApp #{$order->id}: " . $e->getMessage());
+            }
         }
 
         $waNumber  = \App\Models\SiteSetting::getValue('whatsapp_number', '34600000000');
