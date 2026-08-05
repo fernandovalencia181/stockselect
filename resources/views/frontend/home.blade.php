@@ -331,6 +331,8 @@
                     loading: false,
                     hasMore: {{ $products->hasMorePages() ? 'true' : 'false' }},
                     nextPage: {{ $products->currentPage() + 1 }},
+                    total: {{ $products->total() }},
+                    showingCount: {{ $products->count() }},
                     baseUrl: '{{ request()->url() }}',
                     params: {{ json_encode(request()->except('page')) }},
 
@@ -354,8 +356,20 @@
                             const grid = this.$refs.productGrid;
                             const tmp = document.createElement('div');
                             tmp.innerHTML = data.html;
+                            let addedCount = 0;
                             while (tmp.firstElementChild) {
                                 grid.appendChild(tmp.firstElementChild);
+                                addedCount++;
+                            }
+
+                            if (data.showing !== undefined) {
+                                this.showingCount = data.showing;
+                            } else {
+                                this.showingCount += addedCount;
+                            }
+
+                            if (data.total !== undefined) {
+                                this.total = data.total;
                             }
 
                             this.hasMore = data.hasMore;
@@ -377,9 +391,9 @@
                 <div class="mt-10 md:mt-14 flex flex-col items-center gap-3" x-show="hasMore || loading">
                     <p class="text-[12px] text-gray-400 font-medium" x-show="hasMore && !loading">
                         Mostrando
-                        <span class="font-bold text-gray-700">{{ $products->count() }}</span>
+                        <span class="font-bold text-gray-700" x-text="showingCount"></span>
                         de
-                        <span class="font-bold text-gray-700">{{ $products->total() }}</span>
+                        <span class="font-bold text-gray-700" x-text="total"></span>
                         productos
                     </p>
 
@@ -403,7 +417,7 @@
                 {{-- Todos los productos vistos --}}
                 <div class="mt-10 flex flex-col items-center gap-1.5" x-show="!hasMore && !loading" x-cloak>
                     <div class="w-8 h-px bg-gray-200"></div>
-                    <p class="text-[12px] text-gray-400 font-medium">Has visto todos los productos ({{ $products->total() }})</p>
+                    <p class="text-[12px] text-gray-400 font-medium">Has visto todos los productos (<span x-text="total"></span>)</p>
                     <div class="w-8 h-px bg-gray-200"></div>
                 </div>
             </div>

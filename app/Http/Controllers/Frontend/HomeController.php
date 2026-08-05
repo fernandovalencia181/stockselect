@@ -37,13 +37,14 @@ class HomeController extends Controller
         // Respuesta AJAX (botón "Cargar más")
         if ($request->ajax() || $request->wantsJson()) {
             $html = view('frontend.partials.product-cards', compact('products'))->render();
+            $showing = min($products->total(), (($products->currentPage() - 1) * $products->perPage()) + $products->count());
 
             return response()->json([
                 'html'     => $html,
                 'hasMore'  => $products->hasMorePages(),
                 'nextPage' => $products->currentPage() + 1,
                 'total'    => $products->total(),
-                'showing'  => $products->currentPage() * $products->perPage(),
+                'showing'  => $showing,
             ]);
         }
 
