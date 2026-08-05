@@ -24,6 +24,7 @@ class OrderForm
                     ->label('Estado del Pedido')
                     ->options([
                         'pending' => 'Recibido',
+                        'pending_cash' => 'Pendiente Efectivo (WhatsApp)',
                         'paid' => 'Pagado',
                         'processing' => 'En preparación',
                         'shipped' => 'Enviado',

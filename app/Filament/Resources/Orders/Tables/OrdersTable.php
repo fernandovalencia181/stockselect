@@ -32,20 +32,22 @@ class OrdersTable
                     ->label('Estado')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'pending'    => 'warning',
-                        'paid'       => 'info',
-                        'processing' => 'indigo',
-                        'shipped'    => 'teal',
-                        'delivered'  => 'success',
-                        default      => 'gray',
+                        'pending'      => 'warning',
+                        'pending_cash' => 'warning',
+                        'paid'         => 'info',
+                        'processing'   => 'indigo',
+                        'shipped'      => 'teal',
+                        'delivered'    => 'success',
+                        default        => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'pending'    => 'Pendiente',
-                        'paid'       => 'Pagado',
-                        'processing' => 'En preparación',
-                        'shipped'    => 'Enviado',
-                        'delivered'  => 'Entregado',
-                        default      => $state,
+                        'pending'      => 'Pendiente',
+                        'pending_cash' => 'Pendiente Efectivo',
+                        'paid'         => 'Pagado',
+                        'processing'   => 'En preparación',
+                        'shipped'      => 'Enviado',
+                        'delivered'    => 'Entregado',
+                        default        => $state,
                     })
                     ->searchable(),
                 TextColumn::make('shipping_method')

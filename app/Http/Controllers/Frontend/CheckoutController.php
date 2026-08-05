@@ -398,54 +398,58 @@ class CheckoutController extends Controller
             return redirect()->away($session->url);
         }
 
-        // ── WHATSAPP (flujo existente) ──────────────────────────────────────
-        // Todo dentro de una transacción para evitar OrderItems huérfanos si falla el stock
+        // ── PAGO EN EFECTIVO VÍA WHATSAPP (Flujo de entrega en mano) ────────
         $itemsText = '';
         $order = null;
 
-        \Illuminate\Support\Facades\DB::transaction(function () use (
-            $total, $shipping, $request, $cart, $discountAmount, &$order, &$itemsText
-        ) {
-            $order = \App\Models\Order::create([
-                'status'           => 'pending',
-                'total_amount'     => $total,
-                'shipping_cost'    => $shipping,
-                'shipping_method'  => $request->shipping_method,
-                'customer_name'    => $request->customer_name,
-                'customer_email'   => $request->customer_email,
-                'customer_phone'   => $request->customer_phone,
-                'wants_newsletter' => $request->has('subscribe_newsletter'),
-                'shipping_address' => $request->shipping_address ?? 'Recogida Local',
-                'discount_amount'  => $discountAmount,
-                'coupon_code'      => strtoupper(trim($request->coupon_code ?? '')),
-            ]);
-
-            foreach ($cart as $item) {
-                $product   = \App\Models\Product::find($item['id']);
-                $costPrice = $product ? (float) ($product->cost_price ?? 0) : 0;
-
-                \App\Models\OrderItem::create([
-                    'order_id'           => $order->id,
-                    'product_id'         => $item['id'],
-                    'variant_id'         => $item['variant_id'] ?? null,
-                    'quantity'           => $item['quantity'],
-                    'price_at_time'      => $item['price'],
-                    'cost_price_at_time' => $costPrice,
-                    'size'               => $item['size'] ?? null,
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use (
+                $total, $shipping, $request, $cart, $discountAmount, &$order, &$itemsText
+            ) {
+                $order = \App\Models\Order::create([
+                    'status'           => 'pending_cash',
+                    'total_amount'     => $total,
+                    'shipping_cost'    => $shipping,
+                    'shipping_method'  => $request->shipping_method,
+                    'customer_name'    => $request->customer_name,
+                    'customer_email'   => $request->customer_email,
+                    'customer_phone'   => $request->customer_phone,
+                    'wants_newsletter' => $request->has('subscribe_newsletter'),
+                    'shipping_address' => $request->shipping_address ?? 'Recogida Local',
+                    'discount_amount'  => $discountAmount,
+                    'coupon_code'      => strtoupper(trim($request->coupon_code ?? '')),
                 ]);
 
-                // Reducción de Stock (dentro de la transacción: si falla, todo se revierte)
-                if (isset($item['variant_id'])) {
-                    $variant = \App\Models\ProductVariant::find($item['variant_id']);
-                    if (!$variant || $variant->stock < $item['quantity']) {
-                        throw new \Exception("Stock insuficiente para {$item['name']}");
+                foreach ($cart as $item) {
+                    // Bloqueo pesimista con lockForUpdate() para evitar race conditions
+                    if (isset($item['variant_id'])) {
+                        $variant = \App\Models\ProductVariant::lockForUpdate()->find($item['variant_id']);
+                        if (!$variant || $variant->stock < $item['quantity']) {
+                            throw new \Exception("Lo sentimos, el producto '{$item['name']}' (Talla " . ($item['size'] ?? '-') . ") ya no dispone de stock suficiente.");
+                        }
+                        $variant->decrement('stock', $item['quantity']);
                     }
-                    $variant->decrement('stock', $item['quantity']);
-                }
 
-                $itemsText .= "- {$item['quantity']}x {$item['name']} (Talla {$item['size']}) — {$item['price']}€\n";
-            }
-        });
+                    $product   = \App\Models\Product::find($item['id']);
+                    $costPrice = $product ? (float) ($product->cost_price ?? 0) : 0;
+
+                    \App\Models\OrderItem::create([
+                        'order_id'           => $order->id,
+                        'product_id'         => $item['id'],
+                        'variant_id'         => $item['variant_id'] ?? null,
+                        'quantity'           => $item['quantity'],
+                        'price_at_time'      => $item['price'],
+                        'cost_price_at_time' => $costPrice,
+                        'size'               => $item['size'] ?? null,
+                    ]);
+
+                    $itemsText .= "- {$item['quantity']}x {$item['name']} (Talla " . ($item['size'] ?? '-') . ") — " . number_format($item['price'], 2) . "€\n";
+                }
+            });
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error procesando pedido en efectivo / WhatsApp: " . $e->getMessage());
+            return back()->withErrors(['cart' => $e->getMessage()])->withInput();
+        }
 
         // Registrar uso del cupón
         if ($request->filled('coupon_code')) {
@@ -483,26 +487,24 @@ class CheckoutController extends Controller
             \Illuminate\Support\Facades\Log::error("Error enviando confirmación de pedido WhatsApp #{$order->id}: " . $e->getMessage());
         }
 
-        // Bug fix #3: usar $shipping (calculado, puede ser 0 si es gratis)
-        // Bug fix #6: nombre de tienda desde ajustes
         $waNumber  = \App\Models\SiteSetting::getValue('whatsapp_number', '34600000000');
         $shopName  = \App\Models\SiteSetting::getValue('legal_shop_name', 'Stock Select');
-        $metodo    = $order->shipping_method === 'local_pickup'
-            ? 'Recogida Local (Mollerussa)'
-            : ($shipping > 0 ? 'InPost/Correos (' . number_format($shipping, 2) . '€)' : 'InPost/Correos (Gratis)');
 
-        $msg  = "¡Hola! He realizado el pedido #{$order->id} en {$shopName}.\n\n";
+        $msg  = "¡Hola! Quiero confirmar mi pedido #{$order->id} en {$shopName}.\n\n";
         $msg .= "*Cliente:* {$order->customer_name}\n";
-        $msg .= "*Email:* {$order->customer_email}\n";
-        $msg .= "*Envío:* {$metodo}\n\n";
+        $msg .= "*Teléfono:* {$order->customer_phone}\n\n";
         $msg .= "*Artículos:*\n{$itemsText}\n";
 
-        // Bug fix #1: $total ya tiene el descuento restado — NO restar de nuevo
         if ($order->discount_amount > 0) {
-            $msg .= "*Cupón:* {$order->coupon_code} (-" . number_format($order->discount_amount, 2) . "€)\n";
+            $msg .= "*Descuento cupón ({$order->coupon_code}):* -" . number_format($order->discount_amount, 2) . "€\n";
         }
-        $msg .= "*Total: " . number_format($total, 2) . " €*\n\n";
-        $msg .= "¿Me indicas cómo realizar el pago?";
+        $msg .= "*Total:* " . number_format($total, 2) . " €\n\n";
+
+        if ($order->shipping_method === 'local_pickup') {
+            $msg .= "📍 Sé que la entrega en mano es en Mollerussa y el pago es en efectivo.\n\n¿Cuándo podríamos coordinar la entrega?";
+        } else {
+            $msg .= "📍 Entrega: {$order->shipping_address}\n💵 Pago en efectivo al recibir / entrega en mano.\n\n¿Cuándo podríamos coordinar la entrega?";
+        }
 
         return redirect()->away("https://wa.me/{$waNumber}?text=" . urlencode($msg));
 
