@@ -3,16 +3,11 @@
         x-data="{ 
             step: 1,
             maxStepReached: 1,
-            shippingMethod: 'standard_delivery', 
+            shippingMethod: 'local_pickup', 
             subtotal: @json($subtotal ?? 0),
-            threshold: @json($threshold ?? 50),
-            shippingCostValue: @json($shippingCost ?? 4),
-            get shippingCost() {
-                if(this.shippingMethod === 'local_pickup') return 0;
-                return (this.subtotal || 0) >= this.threshold ? 0 : this.shippingCostValue;
-            },
+            shippingCost: 0,
             get total() {
-                return (this.subtotal || 0) + this.shippingCost - (this.discountAmount || 0);
+                return Math.max(0, (this.subtotal || 0) - (this.discountAmount || 0));
             },
             couponCode: '',
             appliedCouponCode: '',
@@ -144,12 +139,6 @@
                         if (!(this.customerEmail || '').trim() || !this.customerEmail.includes('@')) { this.triggerError('Email no válido.'); return; }
                         if (!(this.customerPhone || '').trim()) { this.triggerError('El teléfono es obligatorio.'); return; }
                     }
-                    if (this.step === 2 && this.shippingMethod === 'standard_delivery') {
-                        if (!(this.shippingStreet || '').trim()) { this.triggerError('Falta la calle.'); return; }
-                        if (!(this.shippingNumber || '').trim()) { this.triggerError('Falta el número de la calle.'); return; }
-                        if (!(this.shippingCity || '').trim()) { this.triggerError('Falta la ciudad.'); return; }
-                        if (!(this.shippingZip || '').trim()) { this.triggerError('Falta el código postal.'); return; }
-                    }
                 }
                 
                 this.step = targetStep;
@@ -211,7 +200,7 @@
                     <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300"
                         :class="step >= 2 ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'">2</div>
                     <span class="text-[11px] font-bold uppercase tracking-widest transition-colors duration-300"
-                        :class="step >= 2 ? 'text-black' : 'text-gray-400'">Envío</span>
+                        :class="step >= 2 ? 'text-black' : 'text-gray-400'">Entrega</span>
                 </div>
                 {{-- Step 3 --}}
                 <div class="relative z-10 flex flex-col items-center gap-2 group" :class="maxStepReached >= 3 ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'" @click="if(maxStepReached >= 3) goToStep(3)">
@@ -283,176 +272,56 @@
                         <div class="mt-10 flex justify-end">
                             <button type="button" @click="goToStep(2)" 
                                 class="bg-black text-white font-bold py-4 px-10 rounded-2xl hover:bg-gray-800 transition active:scale-95 shadow-lg flex items-center gap-2">
-                                <span>Configurar Envío</span>
+                                <span>Configurar Entrega</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                {{-- STEP 2: ENVÍO --}}
+                {{-- STEP 2: ENTREGA --}}
                 <div class="lg:col-span-2 space-y-8" x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4">
                     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
                         <div class="flex items-center gap-4 mb-8">
-                            <div class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center">
-                                <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
                             <div>
-                                <h2 class="text-xl font-extrabold text-gray-900">Opciones de Envío</h2>
-                                <p class="text-sm text-gray-400">Cómo quieres recibir tus productos.</p>
+                                <h2 class="text-xl font-extrabold text-gray-900">Entrega en Mano</h2>
+                                <p class="text-sm text-gray-400">Punto de encuentro y entrega en Mollerussa.</p>
                             </div>
                         </div>
 
-                        <div class="space-y-4 mb-10">
-                            <label class="flex items-center justify-between p-5 border-2 rounded-2xl cursor-pointer transition-all hover:bg-gray-50"
-                                :class="shippingMethod === 'standard_delivery' ? 'border-black bg-gray-50' : 'border-gray-100'">
-                                <div class="flex items-center gap-4">
-                                    <input type="radio" name="shipping_method" value="standard_delivery"
-                                        class="text-black focus:ring-black h-5 w-5" x-model="shippingMethod">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-gray-900">InPost / Correos</span>
-                                        <span class="text-xs text-gray-400">Envío rápido a domicilio o punto pack.</span>
-                                    </div>
-                                </div>
-                                <span class="font-extrabold text-[15px]" x-text="(subtotal >= threshold) ? 'Gratis' : shippingCostValue.toFixed(2) + ' €'"></span>
-                            </label>
+                        <input type="hidden" name="shipping_method" value="local_pickup">
 
-                            <label class="flex items-center justify-between p-5 border-2 rounded-2xl cursor-pointer transition-all hover:bg-gray-50"
-                                :class="shippingMethod === 'local_pickup' ? 'border-black bg-gray-50' : 'border-gray-100'">
-                                <div class="flex items-center gap-4">
-                                    <input type="radio" name="shipping_method" value="local_pickup"
-                                        class="text-black focus:ring-black h-5 w-5" x-model="shippingMethod">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-gray-900">Recogida Local (Mollerussa)</span>
-                                        <span class="text-xs text-gray-400">Pasa por nuestra sede y ahorra el envío.</span>
+                        <div class="space-y-6">
+                            <div class="p-6 border-2 border-black bg-gray-50/80 rounded-2xl">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center shrink-0">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                     </div>
-                                </div>
-                                <span class="font-extrabold text-green-600 text-[15px]">Gratis</span>
-                            </label>
-                        </div>
-
-                        {{-- Address Search (Only for delivery) --}}
-                        <div x-show="shippingMethod === 'standard_delivery'" x-transition class="space-y-6 pt-6 border-t border-gray-50">
-                            <h3 class="text-base font-bold text-gray-900">¿Dónde lo enviamos?</h3>
-                            
-                            <div class="relative">
-                                <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1">Buscar tu dirección</label>
-                                <p class="text-[11px] text-gray-400 mb-2">Escribe el nombre de tu calle y selecciona el resultado. Los campos se rellenan solos.</p>
-                                <div class="relative group">
-                                    <input type="text" x-model="searchQuery"
-                                        @input.debounce.400ms="fetchAddresses()"
-                                        @keydown.escape="searchResults = []"
-                                        placeholder="Ej: Calle Mayor, Avda. Diagonal..."
-                                        autocomplete="off"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4 pl-12 pr-10 transition-all">
-                                    <div class="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between flex-wrap gap-2">
+                                            <span class="font-extrabold text-gray-900 text-base">Entrega Directa en Mollerussa</span>
+                                            <span class="font-extrabold text-green-600 text-sm bg-green-50 px-2.5 py-0.5 rounded-full">Gratis (0,00 €)</span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 mt-2 leading-relaxed">
+                                            Te entregamos tus prendas en mano en <strong class="text-gray-900">Mollerussa (Lleida)</strong>. Tras enviar el pedido, te contactaremos directamente por WhatsApp para coordinar el lugar y la hora que mejor te convenga.
+                                        </p>
                                     </div>
-                                    {{-- Spinner --}}
-                                    <div x-show="isSearching" class="absolute right-4 top-1/2 -translate-y-1/2" style="display:none">
-                                        <svg class="animate-spin h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                    </div>
-                                    {{-- Botón limpiar --}}
-                                    <button type="button"
-                                        x-show="searchQuery.length > 0 && !isSearching"
-                                        @click="searchQuery = ''; searchResults = []; shippingStreet = ''; shippingNumber = ''; shippingCity = ''; shippingZip = ''; shippingProvince = '';"
-                                        class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-600 transition-colors"
-                                        style="display:none">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                    </button>
-                                </div>
-
-                                {{-- Resultados Dropdown --}}
-                                <div x-show="searchResults && searchResults.length > 0"
-                                    class="absolute z-50 w-full mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl overflow-hidden"
-                                    style="display: none;" @click.away="searchResults = []">
-                                    <template x-for="feature in (searchResults || [])" :key="feature.properties.osm_id || Math.random()">
-                                        <button type="button" @click="selectAddress(feature)"
-                                            class="w-full text-left px-5 py-3.5 hover:bg-gray-50 border-b border-gray-50 last:border-0 transition-colors flex items-start gap-3">
-                                            <svg class="w-4 h-4 mt-0.5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                            <div class="flex flex-col min-w-0">
-                                                <span class="text-[13px] font-bold text-gray-900 leading-tight"
-                                                    x-text="(feature.properties.street || feature.properties.name || '') + (feature.properties.housenumber ? ', ' + feature.properties.housenumber : '')"></span>
-                                                <span class="text-[11px] text-gray-400 mt-0.5"
-                                                    x-text="[feature.properties.city || feature.properties.town || feature.properties.village || '', feature.properties.county || feature.properties.state || '', feature.properties.postcode ? 'CP ' + feature.properties.postcode : ''].filter(Boolean).join(' · ')"></span>
-                                            </div>
-                                        </button>
-                                    </template>
-                                </div>
-
-                                {{-- Confirmación visual de dirección seleccionada --}}
-                                <div x-show="shippingStreet && !searchResults.length"
-                                    class="mt-2 flex items-center gap-2 text-[12px] text-green-600 font-medium"
-                                    style="display:none">
-                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                    Dirección cargada. Revisa y completa los campos si es necesario.
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-x-6 gap-y-6">
-                                {{-- Fila 1: Calle y Número --}}
-                                <div class="sm:col-span-3">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Calle</label>
-                                    </div>
-                                    <input type="text" name="shipping_street" x-model="shippingStreet"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Nº</label>
-                                    </div>
-                                    <input type="text" name="shipping_number" x-model="shippingNumber"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-
-                                {{-- Fila 2: Vivienda y Ciudad --}}
-                                <div class="sm:col-span-2">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Vivienda (Piso, Puerta, Letra, Timbre...)</label>
-                                    </div>
-                                    <input type="text" name="shipping_floor" x-model="shippingFloor"
-                                        placeholder="Ej: 2º B, Ático..."
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Ciudad</label>
-                                    </div>
-                                    <input type="text" name="shipping_city" x-model="shippingCity"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-
-                                {{-- Fila 3: Código Postal y Provincia --}}
-                                <div class="sm:col-span-2">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Código Postal</label>
-                                    </div>
-                                    <input type="text" name="shipping_zip" x-model="shippingZip"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <div class="flex flex-col justify-end min-h-[48px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Provincia</label>
-                                    </div>
-                                    <input type="text" name="shipping_province" x-model="shippingProvince"
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all h-[58px]">
-                                </div>
-
-                                {{-- Fila 4: Notas --}}
-                                <div class="sm:col-span-4">
-                                    <div class="flex flex-col justify-end min-h-[40px] mb-2">
-                                        <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400">Instrucciones para el repartidor (Opcional)</label>
-                                    </div>
-                                    <textarea name="shipping_notes" x-model="shippingNotes" rows="3"
-                                        placeholder="Ej: Es una casa blanca con portón azul, llamar al timbre 4..."
-                                        class="block w-full rounded-2xl border-gray-100 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[14px] py-4.5 px-6 transition-all"></textarea>
-                                </div>
+                            <div>
+                                <label class="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Preferencia de punto de encuentro o notas (Opcional)</label>
+                                <textarea name="shipping_notes" x-model="shippingNotes" rows="3"
+                                    placeholder="Ej: Prefiero por la tarde, cerca del centro o estación..."
+                                    class="block w-full rounded-2xl border-gray-200 bg-gray-50 shadow-sm focus:border-black focus:ring-black text-[13px] py-4 px-5 transition-all"></textarea>
                             </div>
                         </div>
 
                         <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-between">
-                            <button type="button" @click="goToStep(1)" class="text-gray-400 font-bold px-8 py-4 hover:text-black transition">← Volver atrás</button>
+                            <button type="button" @click="goToStep(1)" class="text-gray-400 font-bold px-8 py-4 hover:text-black transition">← Volver a Datos</button>
                             <button type="button" @click="goToStep(3)"
                                 class="bg-black text-white font-bold py-4 px-10 rounded-2xl hover:bg-gray-800 transition shadow-lg flex items-center justify-center gap-2">
                                 <span>Ver Pago y Resumen</span>
@@ -578,10 +447,9 @@
                                 <span>Subtotal</span>
                                 <span class="font-bold text-gray-900" x-text="(subtotal || 0).toFixed(2) + ' €'"></span>
                             </div>
-                            <div class="flex justify-between text-gray-500">
-                                <span>Envío</span>
-                                <span :class="shippingCost === 0 ? 'text-green-600 font-bold' : 'font-bold text-gray-900'"
-                                      x-text="shippingCost === 0 ? 'Gratis' : shippingCost.toFixed(2) + ' €'"></span>
+                            <div class="flex justify-between items-center text-gray-500">
+                                <span>Entrega en mano</span>
+                                <span class="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full text-xs">Gratis (Mollerussa)</span>
                             </div>
 
                             <template x-if="discountAmount > 0">

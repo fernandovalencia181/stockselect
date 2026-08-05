@@ -205,7 +205,8 @@ class CheckoutController extends Controller
 
             $fullAddress = implode(', ', array_filter($parts));
         } else {
-            $fullAddress = "Recogida Local (Mollerussa)";
+            $notes = $request->filled('shipping_notes') ? ' [Notas: ' . trim($request->shipping_notes) . ']' : '';
+            $fullAddress = "Entrega en Mano (Mollerussa)" . $notes;
         }
 
         // Sobrescribimos el request para que fluya correctamente a los modelos
