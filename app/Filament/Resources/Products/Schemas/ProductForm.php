@@ -180,10 +180,12 @@ class ProductForm
                             ->disk('public')
                             ->directory('products')
                             ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
                             ->image()
                             ->panelLayout('grid')
                             ->visibility('public')
-                            ->imagePreviewHeight('250')
+                            ->imagePreviewHeight('500')
                             ->loadingIndicatorPosition('overlay')
                             ->removeUploadedFileButtonPosition('top-right')
                             ->saveUploadedFileUsing(function (\Livewire\Features\SupportFileUploads\TemporaryUploadedFile $file) {
