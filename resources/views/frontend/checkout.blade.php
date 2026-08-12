@@ -28,7 +28,7 @@
                     {{-- Encabezado --}}
                     <div>
                         <h1 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Finalizar Pedido</h1>
-                        <p class="text-sm text-gray-500 mt-1">Introduce tus datos y coordinamos la entrega en Mollerussa por WhatsApp.</p>
+                        <p class="text-sm text-gray-500 mt-1">Introduce tus datos y coordinamos la entrega por WhatsApp.</p>
                     </div>
 
                     {{-- Tarjeta de Datos --}}
@@ -84,7 +84,7 @@
                                 <span class="text-base">📍</span>
                                 <div>
                                     <strong class="text-white block font-bold">Entrega en mano</strong>
-                                    <span>Punto de encuentro en Mollerussa (Gratis).</span>
+                                    <span>Entrega en mano (Gratis).</span>
                                 </div>
                             </div>
                             <div class="flex items-start gap-2.5 p-3 rounded-2xl bg-white/5 border border-white/10">
@@ -160,7 +160,7 @@
                         </div>
                         <div class="flex justify-between items-center text-gray-500">
                             <span>Entrega en mano</span>
-                            <span class="font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full text-xs">Gratis (Mollerussa)</span>
+                            <span class="font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full text-xs">Envío gratis</span>
                         </div>
 
                         <div class="flex justify-between items-baseline pt-4 border-t border-gray-100">

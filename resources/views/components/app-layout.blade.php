@@ -1,4 +1,4 @@
-@props(['title' => null, 'description' => null])
+@props(['title' => null, 'description' => null, 'image' => null])
 <!DOCTYPE html>
 <html lang="es">
 
@@ -11,18 +11,18 @@
         content="{{ $description ?? ($settings['site_description'] ?? 'Outlet de ropa deportiva y moda urbana con descuentos de hasta el 70%. Stock limitado en zapatillas, sudaderas y más.') }}">
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="{{ isset($image) ? 'product' : 'website' }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="{{ $title ?? (!empty($settings['site_title']) ? $settings['site_title'] : 'Stock Select') }}">
     <meta property="og:description" content="{{ $description ?? ($settings['site_description'] ?? 'Outlet de ropa deportiva y moda urbana con descuentos de hasta el 70%.') }}">
-    <meta property="og:image" content="{{ !empty($settings['seo_og_image']) ? asset('storage/'.$settings['seo_og_image']) : asset('images/stock_select_logo.png') }}">
+    <meta property="og:image" content="{{ $image ?? (!empty($settings['seo_og_image']) ? asset('storage/'.$settings['seo_og_image']) : asset('images/stock_select_logo.png')) }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
     <meta property="twitter:title" content="{{ $title ?? (!empty($settings['site_title']) ? $settings['site_title'] : 'Stock Select') }}">
     <meta property="twitter:description" content="{{ $description ?? ($settings['site_description'] ?? 'Outlet de ropa deportiva y moda urbana con descuentos de hasta el 70%.') }}">
-    <meta property="twitter:image" content="{{ !empty($settings['seo_og_image']) ? asset('storage/'.$settings['seo_og_image']) : asset('images/stock_select_logo.png') }}">
+    <meta property="twitter:image" content="{{ $image ?? (!empty($settings['seo_og_image']) ? asset('storage/'.$settings['seo_og_image']) : asset('images/stock_select_logo.png')) }}">
 
     @stack('meta')
 
@@ -456,7 +456,7 @@
                     </div>
                     <div class="flex items-center gap-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                         <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                        Entrega en Mano (Mollerussa)
+                        Entrega en Mano (Gratis)
                     </div>
                     <div class="flex items-center gap-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                         <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
@@ -556,7 +556,7 @@
                         </div>
                         <div class="flex items-center gap-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                             <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            Entrega en Mano (Mollerussa)
+                            Entrega en Mano (Gratis)
                         </div>
                         <div class="flex items-center gap-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                             <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>

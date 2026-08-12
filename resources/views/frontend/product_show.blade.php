@@ -1,18 +1,16 @@
-<x-app-layout :title="$product->name" :description="str($product->description)->limit(160)">
+@php
+    $mainImage = null;
+    if (!empty($product->images)) {
+        $mainImage = asset('storage/' . (is_array($product->images) ? $product->images[0] : $product->images));
+    }
+@endphp
+<x-app-layout :title="$product->name" :description="str($product->description)->limit(160)" :image="$mainImage">
     @push('meta')
-        @php
-            $mainImage = null;
-            if (!empty($product->images)) {
-                $mainImage = asset('storage/' . (is_array($product->images) ? $product->images[0] : $product->images));
-            }
-        @endphp
         @if($mainImage)
-            <meta property="og:image" content="{{ $mainImage }}">
-            <meta property="twitter:image" content="{{ $mainImage }}">
             {{-- Preload crucial LCP Image --}}
             <link rel="preload" as="image" href="{{ $mainImage }}" fetchpriority="high">
         @endif
-        <meta property="og:type" content="product">
+
         
         <style>
             @keyframes fadeInUp {

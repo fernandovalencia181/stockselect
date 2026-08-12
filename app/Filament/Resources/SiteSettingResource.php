@@ -17,6 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
 
 class SiteSettingResource extends Resource
 {
@@ -57,6 +58,20 @@ class SiteSettingResource extends Resource
                                             ->label('Mostrar / Activar')
                                             ->afterStateHydrated(fn (Toggle $component, $state) => $component->state((bool) $state))
                                             ->dehydrateStateUsing(fn ($state) => $state ? '1' : '0'),
+                                    ];
+                                }
+
+                                // 1b. Modo de Checkout
+                                if ($key === 'checkout_mode') {
+                                    return [
+                                        Select::make('value')
+                                            ->label('Modo de Checkout')
+                                            ->options([
+                                                'simple'    => '🤝  Entrega en mano (1 paso — sin dirección, pago en efectivo)',
+                                                'multistep' => '📦  Envíos a domicilio (3 pasos — con dirección de envío)',
+                                            ])
+                                            ->required()
+                                            ->helperText('Entrega en mano: formulario rápido, el cliente coordina el punto de recogida por WhatsApp. Envíos: guía al cliente por Datos → Dirección → Pago y genera la dirección de envío.'),
                                     ];
                                 }
 

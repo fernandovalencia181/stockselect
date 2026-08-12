@@ -336,6 +336,20 @@
                     baseUrl: '{{ request()->url() }}',
                     params: {{ json_encode(request()->except('page')) }},
 
+                    init() {
+                        const observer = new IntersectionObserver((entries) => {
+                            if (entries[0].isIntersecting && this.hasMore && !this.loading) {
+                                this.loadMore();
+                            }
+                        }, { rootMargin: '400px' });
+                        
+                        this.$nextTick(() => {
+                            if (this.$refs.loadTrigger) {
+                                observer.observe(this.$refs.loadTrigger);
+                            }
+                        });
+                    },
+
                     async loadMore() {
                         if (this.loading || !this.hasMore) return;
                         this.loading = true;
@@ -387,9 +401,9 @@
                     @include('frontend.partials.product-cards', ['products' => $products])
                 </div>
 
-                {{-- Botón Cargar más --}}
+                {{-- Trigger Infinite Scroll --}}
                 <div class="mt-10 md:mt-14 flex flex-col items-center gap-3" x-show="hasMore || loading">
-                    <p class="text-[12px] text-gray-400 font-medium" x-show="hasMore && !loading">
+                    <p class="text-[12px] text-gray-400 font-medium" x-show="hasMore || loading">
                         Mostrando
                         <span class="font-bold text-gray-700" x-text="showingCount"></span>
                         de
@@ -397,21 +411,12 @@
                         productos
                     </p>
 
-                    <button
-                        @click="loadMore()"
-                        :disabled="loading"
-                        x-show="hasMore"
-                        class="relative inline-flex items-center gap-3 px-8 py-3.5 bg-gray-900 text-white text-[13px] font-bold rounded-full shadow-lg hover:bg-gray-800 active:scale-95 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                        <svg x-show="loading" class="animate-spin w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24">
+                    <div x-ref="loadTrigger" class="h-16 w-full flex items-center justify-center">
+                        <svg x-show="loading" class="animate-spin w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
                         </svg>
-                        <span x-text="loading ? 'Cargando...' : 'Cargar más productos'"></span>
-                        <svg x-show="!loading" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
+                    </div>
                 </div>
 
                 {{-- Todos los productos vistos --}}

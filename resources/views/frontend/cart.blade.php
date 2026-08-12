@@ -161,7 +161,7 @@
                             </div>
                             <div class="flex justify-between items-center text-gray-600">
                                 <span>Entrega en mano</span>
-                                <span class="font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full text-xs">Gratis (Mollerussa)</span>
+                                <span class="font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full text-xs">Envío gratis</span>
                             </div>
                         </div>
 
@@ -176,7 +176,7 @@
                         <div class="mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-2.5">
                             <div class="flex items-center gap-2.5 text-xs text-gray-700 font-bold">
                                 <span class="text-base">📍</span>
-                                <span>Entrega en mano en Mollerussa</span>
+                                <span>Entrega en mano (Gratis)</span>
                             </div>
                             <div class="flex items-center gap-2.5 text-xs text-gray-700 font-bold">
                                 <span class="text-base">💶</span>
@@ -196,7 +196,7 @@
                         </a>
 
                         <p class="text-center text-xs text-gray-400 mt-3">
-                            Entrega en mano en Mollerussa · Pago en efectivo
+                            Entrega en mano · Pago en efectivo
                         </p>
                     </div>
                 </div>

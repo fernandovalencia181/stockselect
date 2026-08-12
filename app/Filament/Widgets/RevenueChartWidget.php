@@ -60,9 +60,13 @@ class RevenueChartWidget extends ChartWidget
                 ->value('total_cost') ?? 0;
 
             $expenses = Expense::whereDate('expense_date', $dateStr)->sum('amount');
+            
+            $stripeRev = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereDate('created_at', $dateStr)->whereNotNull('stripe_payment_id')->sum('total_amount');
+            $stripeCount = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereDate('created_at', $dateStr)->whereNotNull('stripe_payment_id')->count();
+            $fees = ($stripeRev * 0.029) + ($stripeCount * 0.25);
 
             $revenueData[] = round((float) $revenue, 2);
-            $profitData[]  = round((float) ($revenue - $cost - $expenses), 2);
+            $profitData[]  = round((float) ($revenue - $cost - $expenses - $fees), 2);
             $expenseData[] = round((float) $expenses, 2);
         }
 
@@ -97,9 +101,13 @@ class RevenueChartWidget extends ChartWidget
             $expenses = Expense::whereYear('expense_date', $year)
                 ->whereMonth('expense_date', $month)
                 ->sum('amount');
+                
+            $stripeRev = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereYear('created_at', $year)->whereMonth('created_at', $month)->whereNotNull('stripe_payment_id')->sum('total_amount');
+            $stripeCount = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereYear('created_at', $year)->whereMonth('created_at', $month)->whereNotNull('stripe_payment_id')->count();
+            $fees = ($stripeRev * 0.029) + ($stripeCount * 0.25);
 
             $revenueData[] = round((float) $revenue, 2);
-            $profitData[]  = round((float) ($revenue - $cost - $expenses), 2);
+            $profitData[]  = round((float) ($revenue - $cost - $expenses - $fees), 2);
             $expenseData[] = round((float) $expenses, 2);
         }
 

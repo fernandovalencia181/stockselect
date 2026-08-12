@@ -113,8 +113,11 @@ class FinancialStatsWidget extends StatsOverviewWidget
 
         $totalOperationalCost = $packagingCost + $shippingCost + $otherCost;
 
-        // Comisiones Stripe
-        $gatewayFees = ($totalRevenue * 0.029) + ($paidOrderCount * 0.25);
+        // Comisiones Stripe (Solo para pedidos pagados por tarjeta/Stripe)
+        $stripeOrders = (clone $paidOrders)->whereNotNull('stripe_payment_id');
+        $stripeRevenue = (clone $stripeOrders)->sum('total_amount');
+        $stripeOrderCount = (clone $stripeOrders)->count();
+        $gatewayFees = ($stripeRevenue * 0.029) + ($stripeOrderCount * 0.25);
 
         // Beneficio neto real (ingresos - COGS - gastos operacionales - comisiones)
         $netProfit = $totalRevenue - $cogs - $totalOperationalCost - $gatewayFees;
@@ -180,7 +183,12 @@ class FinancialStatsWidget extends StatsOverviewWidget
                 ->selectRaw('SUM(cost_price_at_time * quantity) as total_cost')
                 ->value('total_cost') ?? 0;
             $exp  = Expense::whereDate('expense_date', $d)->sum('amount');
-            return (float) ($rev - $cost - $exp);
+            
+            $stripeRev = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereDate('created_at', $d)->whereNotNull('stripe_payment_id')->sum('total_amount');
+            $stripeCount = Order::whereIn('status', ['paid', 'processing', 'shipped', 'delivered'])->whereDate('created_at', $d)->whereNotNull('stripe_payment_id')->count();
+            $fees = ($stripeRev * 0.029) + ($stripeCount * 0.25);
+
+            return (float) ($rev - $cost - $exp - $fees);
         });
     }
 

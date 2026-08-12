@@ -25,7 +25,10 @@ class CheckoutController extends Controller
         $shippingCost = (float) \App\Models\SiteSetting::getValue('shipping_cost', 4.00);
         $threshold = (float) \App\Models\SiteSetting::getValue('shipping_free_threshold', 50.00);
 
-        return view('frontend.checkout', compact('cart', 'subtotal', 'shippingCost', 'threshold'));
+        $checkoutMode = \App\Models\SiteSetting::getValue('checkout_mode', 'simple');
+        $view = $checkoutMode === 'multistep' ? 'frontend.checkout_multistep' : 'frontend.checkout';
+
+        return view($view, compact('cart', 'subtotal', 'shippingCost', 'threshold'));
     }
 
     /**
@@ -175,7 +178,19 @@ class CheckoutController extends Controller
             ? trim($request->customer_email)
             : (preg_replace('/[^0-9]/', '', $request->customer_phone) . '@whatsapp.stockselect.es');
 
-        $fullAddress = "Entrega en Mano (Mollerussa)";
+        // Construir la dirección según el método de envío
+        if ($shippingMethod === 'standard_delivery') {
+            $parts = array_filter([
+                trim(($request->shipping_street ?? '') . ' ' . ($request->shipping_number ?? '')),
+                $request->shipping_floor ?? '',
+                $request->shipping_city ?? '',
+                $request->shipping_zip ?? '',
+                $request->shipping_province ?? '',
+            ]);
+            $fullAddress = implode(', ', array_filter($parts)) ?: 'Sin dirección indicada';
+        } else {
+            $fullAddress = 'Entrega en Mano (Mollerussa)';
+        }
 
         // Sobrescribimos el request para que fluya correctamente a los modelos
         $request->merge([
@@ -481,7 +496,7 @@ class CheckoutController extends Controller
         $msg .= "*Total:* " . number_format($total, 2) . " €\n\n";
 
         if ($order->shipping_method === 'local_pickup') {
-            $msg .= "📍 Sé que la entrega en mano es en Mollerussa y el pago es en efectivo.\n\n¿Cuándo podríamos coordinar la entrega?";
+            $msg .= "📍 Entrega en mano (envío gratis). Pago en efectivo al recibir.\n\n¿Cuándo y dónde podríamos coordinar la entrega?";
         } else {
             $msg .= "📍 Entrega: {$order->shipping_address}\n💵 Pago en efectivo al recibir / entrega en mano.\n\n¿Cuándo podríamos coordinar la entrega?";
         }

@@ -27,7 +27,13 @@ class HomeController extends Controller
         }
 
         if ($request->filled('genero') && $request->genero !== 'Todo') {
-            $query->whereIn('gender', [$request->genero, \App\Models\Product::GENDER_UNISEX]);
+            if ($request->genero === 'ninos') {
+                // Si es niños, solo mostrar productos de niños (excluir unisex de adultos)
+                $query->where('gender', $request->genero);
+            } else {
+                // Si es hombre o mujer, mostrar también los productos unisex
+                $query->whereIn('gender', [$request->genero, \App\Models\Product::GENDER_UNISEX]);
+            }
         }
 
         // Orden por los más recientes primero (Lo mejor para ventas y clientes recurrentes)
