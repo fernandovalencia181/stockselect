@@ -38,7 +38,7 @@ class HomeController extends Controller
 
         // Orden por los más recientes primero (Lo mejor para ventas y clientes recurrentes)
         // Así los usuarios que vuelven ven las novedades arriba.
-        $products = $query->latest()->paginate(12)->withQueryString();
+        $products = $query->orderBy('sort_order')->orderByDesc('created_at')->paginate(12)->withQueryString();
 
         // Respuesta AJAX (botón "Cargar más")
         if ($request->ajax() || $request->wantsJson()) {

@@ -16,11 +16,15 @@ class ProductsTable
     {
         return $table
             ->paginated(false)
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('name')
                     ->label('Nombre')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn ($record) => number_format($record->price, 2) . ' € · ' . ($record->is_active ? 'Activo' : 'Inactivo'))
+                    ->wrap(),
                 TextColumn::make('category.name')
                     ->label('Categoría')
                     ->searchable()
@@ -29,7 +33,8 @@ class ProductsTable
                 TextColumn::make('price')
                     ->label('Precio')
                     ->money('EUR')
-                    ->sortable(),
+                    ->sortable()
+                    ->visibleFrom('md'),
                 TextColumn::make('original_price')
                     ->label('P. Original')
                     ->money('EUR')
@@ -37,7 +42,8 @@ class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_active')
                     ->label('Status')
-                    ->boolean(),
+                    ->boolean()
+                    ->visibleFrom('md'),
             ])
             ->filters([
                 //

@@ -116,16 +116,31 @@ class ProductForm
                                     ->numeric()
                                     ->prefix('€'),
                                 Placeholder::make('net_profit')
-                                    ->label('Margen Neto (Stripe)')
+                                    ->label(function () {
+                                        $mode = \App\Models\SiteSetting::where('key', 'checkout_mode')->value('value') ?? 'simple';
+                                        return $mode === 'multistep' ? 'Margen Neto (con comisión Stripe)' : 'Margen Neto (Entrega en Mano)';
+                                    })
                                     ->content(function ($get) {
                                         $price = (float) $get('price');
                                         $cost = (float) $get('cost_price');
                                         if (!$price || !$cost)
                                             return '---';
-                                        $fees = ($price * 0.015) + 0.25;
-                                        $profit = $price - $cost - $fees;
+
+                                        $mode = \App\Models\SiteSetting::where('key', 'checkout_mode')->value('value') ?? 'simple';
+
+                                        if ($mode === 'multistep') {
+                                            // Modo envío a domicilio: descontar comisión Stripe
+                                            $fees = ($price * 0.015) + 0.25;
+                                            $profit = $price - $cost - $fees;
+                                            $detail = ' <span class="text-gray-400 text-xs font-normal">(−' . number_format($fees, 2) . '€ Stripe)</span>';
+                                        } else {
+                                            // Modo entrega en mano: sin comisión
+                                            $profit = $price - $cost;
+                                            $detail = ' <span class="text-gray-400 text-xs font-normal">(sin comisión)</span>';
+                                        }
+
                                         $color = $profit >= 0 ? 'text-green-600' : 'text-red-600';
-                                        return new HtmlString("<span class='font-bold {$color}'>" . number_format($profit, 2) . "€</span>");
+                                        return new HtmlString("<span class='font-bold {$color}'>" . number_format($profit, 2) . "€</span>" . $detail);
                                     }),
                                 TextInput::make('color_name')
                                     ->label('Nombre Color'),

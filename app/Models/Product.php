@@ -29,6 +29,7 @@ class Product extends Model
         'fit_advice',
         'category_id',
         'images',
+        'sort_order',
     ];
 
     const GENDER_MALE = 'hombre';
